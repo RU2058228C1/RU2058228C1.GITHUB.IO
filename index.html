@@ -8,30 +8,19 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        @font-face {font-family: Arctika;
-        src: url('css/Arctika_Script.otf');
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        @font-face {font-family:Arctika;src:url('css/Arctika_Script.otf');}
+        ::-webkit-scrollbar {width:0px;}
+        * {margin: 0;padding: 0;box-sizing: border-box;}
 
-        body {
-            margin: 0;
-            overflow-x: hidden;
-            background: #000;
-            font-family: 'Arial', sans-serif;
-        }
+        body {margin:0;background: #000;overflow-x:hidden;font-family:'Arial',sans-serif;}
 
-        #threejs-background {
-            position: fixed;
+        #threejs-background {       
             top: 0;
             left: 0;
+            z-index: -1;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            position: fixed;
         }
 
         .content {
