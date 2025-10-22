@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВОВРЕМЯ ОСТАНОВИСЬ - Лотерея</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            background: #000;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3em;
+            text-shadow: 2px 2px 10px rgba(102, 126, 234, 0.8);
+            margin-bottom: 20px;
+            font-weight: 900;
+            letter-spacing: 3px;
+        }
+
+        .balance {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5em;
+            color: #4CAF50;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .ticket-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .control-button {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .control-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .control-button.remove {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .tickets-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1400px;
+            margin-bottom: 30px;
+        }
+
+        .ticket {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .ticket:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .ticket-title {
+            color: white;
+            font-size: 1.6em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(102, 126, 234, 0.6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .slot.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 0 25px rgba(102, 126, 234, 0.8);
+            border-color: white;
+        }
+
+        .slot.win {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-color: #fff;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .play-button:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .play-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .play-button.stop {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1em;
+        }
+
+        .result.win {
+            background: rgba(40, 167, 69, 0.3);
+            color: #b5f6c7;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            text-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
+        .result.lose {
+            background: rgba(220, 53, 69, 0.3);
+            color: #f8b4ba;
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+
+        .ticket-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #aaa;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(40, 167, 69, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(40, 167, 69, 0.9); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(40, 167, 69, 0.6); }
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .instructions h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .instructions ol {
+            margin-left: 25px;
+            color: #ddd;
+        }
+
+        .instructions li {
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .audio-control {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1.5em;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .audio-control:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .audio-control.muted {
+            opacity: 0.5;
+        }
+
+        .metamask-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .metamask-control:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .metamask-control img {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .metamask-control.connected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .metamask-control.disconnected {
+            border-color: #f44336;
+            opacity: 0.7;
+        }
+
+        .metamask-control.pending {
+            border-color: #FF9800;
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="threejs-background"></div>
+    <div class="audio-control" id="audioControl">🔊</div>
+    <div class="metamask-control disconnected" id="metamaskControl">
+        <img src="https://blockchainaccreditive.github.io/MetaMask_Fox.svg.png" alt="MetaMask">
+    </div>
+    
+    <div class="content">
+        <div class="header">
+            <h1>ВОВРЕМЯ ОСТАНОВИСЬ</h1>
+            <div class="balance" id="balanceDisplay">1000 ₽</div>
+        </div>
+
+        <div class="ticket-controls">
+            <button class="control-button" id="addTicketButton">+ Добавить билет</button>
+            <button class="control-button remove" id="removeTicketButton">- Удалить билет</button>
+        </div>
+
+        <div class="tickets-container" id="ticketsContainer">
+            <!-- Билеты будут генерироваться JavaScript -->
+        </div>
+
+        <div class="instructions">
+            <h3>Как играть:</h3>
+            <ol>
+                <li>Нажмите кнопку "ИГРАТЬ" - начнется автоматическое вращение слотов со звуковыми эффектами</li>
+                <li>Внимательно следите за подсвечивающимися ячейками</li>
+                <li>Нажмите "СТОП" в нужный момент, чтобы остановить вращение</li>
+                <li>Если остановитесь на выигрышной комбинации - вы победили 500 рублей!</li>
+                <li>Используйте кнопки выше для добавления или удаления билетов</li>
+                <li>Нажмите на лису MetaMask в правом верхнем углу для подключения/отключения кошелька</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Three.js сцены для красивого фона
+        function initThreeJS() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('threejs-background').appendChild(renderer.domElement);
+
+            // Создание частиц для фона
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 1500;
+            
+            const posArray = new Float32Array(particlesCount * 3);
+            const colorArray = new Float32Array(particlesCount * 3);
+            
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 50;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            // Добавляем центральный объект
+            const geometry = new THREE.IcosahedronGeometry(2, 1);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea, 
+                shininess: 100,
+                transparent: true,
+                opacity: 0.7
+            });
+            const centralObject = new THREE.Mesh(geometry, material);
+            scene.add(centralObject);
+
+            // Добавляем освещение
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            camera.position.z = 10;
+
+            // Анимация
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0005;
+                particlesMesh.rotation.y += 0.001;
+                
+                centralObject.rotation.x += 0.01;
+                centralObject.rotation.y += 0.005;
+                
+                // Пульсация центрального объекта
+                centralObject.scale.x = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+                centralObject.scale.y = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+                centralObject.scale.z = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+                
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Обработка изменения размера окна
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Аудио система для щелчков и звуков выигрыша
+        class AudioSystem {
+            constructor() {
+                this.audioContext = null;
+                this.isMuted = false;
+                this.init();
+            }
+
+            init() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API не поддерживается');
+                }
+            }
+
+            playClick(frequency = 800, duration = 0.05) {
+                if (this.isMuted || !this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            playWinSound() {
+                if (this.isMuted || !this.audioContext) return;
+
+                // Создаем основной осциллятор для выигрыша
+                const oscillator1 = this.audioContext.createOscillator();
+                const oscillator2 = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                // Настраиваем частоты для приятного звука выигрыша
+                oscillator1.frequency.value = 523.25; // Нота C5
+                oscillator2.frequency.value = 659.25; // Нота E5
+                oscillator1.type = 'sine';
+                oscillator2.type = 'sine';
+
+                // Настраиваем громкость с плавным нарастанием и затуханием
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 1.5);
+
+                // Запускаем осцилляторы
+                oscillator1.start(this.audioContext.currentTime);
+                oscillator2.start(this.audioContext.currentTime);
+                
+                // Останавливаем через 1.5 секунды
+                oscillator1.stop(this.audioContext.currentTime + 1.5);
+                oscillator2.stop(this.audioContext.currentTime + 1.5);
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                return this.isMuted;
+            }
+        }
+
+        // MetaMask интеграция
+        class MetaMaskIntegration {
+            constructor() {
+                this.isConnected = false;
+                this.account = null;
+                this.balance = 0;
+                this.isConnecting = false;
+                this.init();
+            }
+
+            async init() {
+                // Проверяем наличие MetaMask
+                if (this.isMetaMaskInstalled()) {
+                    // Проверяем, есть ли уже подключенные аккаунты
+                    try {
+                        const accounts = await window.ethereum.request({ 
+                            method: 'eth_accounts' 
+                        });
+                        
+                        if (accounts.length > 0) {
+                            this.account = accounts[0];
+                            this.isConnected = true;
+                            await this.updateBalance();
+                            console.log('MetaMask уже подключен:', this.account);
+                        }
+                    } catch (error) {
+                        console.log('Ошибка при проверке аккаунтов:', error);
+                    }
+
+                    // Слушаем изменения аккаунтов
+                    window.ethereum.on('accountsChanged', (accounts) => {
+                        if (accounts.length > 0) {
+                            this.account = accounts[0];
+                            this.isConnected = true;
+                            this.updateBalance();
+                        } else {
+                            this.isConnected = false;
+                            this.account = null;
+                            this.balance = 0;
+                        }
+                        this.updateUI();
+                    });
+
+                    this.updateUI();
+                } else {
+                    console.log('Метамаск не обнаружен');
+                }
+            }
+
+            isMetaMaskInstalled() {
+                return typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
+            }
+
+            async connect() {
+                if (!this.isMetaMaskInstalled()) {
+                    console.log('MetaMask не установлен');
+                    return false;
+                }
+
+                if (this.isConnecting) {
+                    console.log('Подключение уже выполняется');
+                    return false;
+                }
+
+                this.isConnecting = true;
+                this.updateUI();
+
+                try {
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+                    
+                    this.account = accounts[0];
+                    this.isConnected = true;
+                    await this.updateBalance();
+                    this.updateUI();
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка подключения MetaMask:', error);
+                    
+                    // Обрабатываем специфическую ошибку о pending запросе
+                    if (error.code === -32002) {
+                        console.log('Запрос на подключение уже ожидает подтверждения в MetaMask');
+                    }
+                    
+                    return false;
+                } finally {
+                    this.isConnecting = false;
+                    this.updateUI();
+                }
+            }
+
+            disconnect() {
+                this.isConnected = false;
+                this.account = null;
+                this.balance = 0;
+                this.updateUI();
+                console.log('MetaMask отключен');
+            }
+
+            async updateBalance() {
+                if (!this.account) return;
+
+                try {
+                    const balanceWei = await window.ethereum.request({
+                        method: 'eth_getBalance',
+                        params: [this.account, 'latest']
+                    });
+
+                    this.balance = parseInt(balanceWei) / 1e18;
+                } catch (error) {
+                    console.error('Ошибка получения баланса:', error);
+                }
+            }
+
+            updateUI() {
+                const metamaskControl = document.getElementById('metamaskControl');
+                
+                if (this.isConnecting) {
+                    metamaskControl.classList.add('pending');
+                    metamaskControl.classList.remove('connected', 'disconnected');
+                } else if (this.isConnected) {
+                    metamaskControl.classList.add('connected');
+                    metamaskControl.classList.remove('pending', 'disconnected');
+                } else {
+                    metamaskControl.classList.add('disconnected');
+                    metamaskControl.classList.remove('connected', 'pending');
+                }
+            }
+
+            async toggleConnection() {
+                if (this.isConnected) {
+                    this.disconnect();
+                } else {
+                    await this.connect();
+                }
+            }
+        }
+
+        // Класс для управления лотерейным билетом
+        class LotteryTicket {
+            constructor(container, ticketId, audioSystem, gameManager) {
+                this.ticketId = ticketId;
+                this.container = container;
+                this.audioSystem = audioSystem;
+                this.gameManager = gameManager;
+                this.isPlaying = false;
+                this.currentPosition = 0;
+                this.slotsCount = 8;
+                this.winningPositions = this.generateWinningPositions();
+                this.intervalId = null;
+                this.speed = 150;
+                this.element = null;
+                this.render();
+            }
+
+            generateWinningPositions() {
+                const positions = new Set();
+                const winCount = Math.floor(Math.random() * 2) + 2;
+                
+                while (positions.size < winCount) {
+                    positions.add(Math.floor(Math.random() * this.slotsCount));
+                }
+                return Array.from(positions);
+            }
+
+            render() {
+                const ticketElement = document.createElement('div');
+                ticketElement.className = 'ticket';
+                ticketElement.innerHTML = `
+                    <div class="ticket-title">БИЛЕТ #${this.ticketId}</div>
+                    <div class="game-area">
+                        <div class="slots-container" id="slots-${this.ticketId}">
+                            ${Array.from({length: this.slotsCount}, (_, i) => 
+                                `<div class="slot" data-index="${i}">${i + 1}</div>`
+                            ).join('')}
+                        </div>
+                        <button class="play-button" id="playBtn-${this.ticketId}">ИГРАТЬ</button>
+                        <div class="result" id="result-${this.ticketId}"></div>
+                    </div>
+                    <div class="ticket-info">
+                        ID: <span id="ticketId-${this.ticketId}">${this.ticketId}</span> | 
+                        Выигрышных позиций: ${this.winningPositions.length}
+                    </div>
+                `;
+
+                this.container.appendChild(ticketElement);
+                this.element = ticketElement;
+
+                document.getElementById(`playBtn-${this.ticketId}`).addEventListener('click', () => {
+                    this.handlePlayButton();
+                });
+            }
+
+            handlePlayButton() {
+                if (!this.isPlaying) {
+                    this.startGame();
+                } else {
+                    this.stopGame();
+                }
+            }
+
+            startGame() {
+                this.isPlaying = true;
+                const playButton = document.getElementById(`playBtn-${this.ticketId}`);
+                const resultElement = document.getElementById(`result-${this.ticketId}`);
+                
+                playButton.textContent = 'СТОП';
+                playButton.classList.add('stop');
+                resultElement.textContent = '';
+                resultElement.className = 'result';
+
+                this.resetSlots();
+
+                this.intervalId = setInterval(() => {
+                    this.updateSlotAnimation();
+                }, this.speed);
+            }
+
+            stopGame() {
+                this.isPlaying = false;
+                const playButton = document.getElementById(`playBtn-${this.ticketId}`);
+                const resultElement = document.getElementById(`result-${this.ticketId}`);
+                
+                playButton.textContent = 'ИГРАТЬ';
+                playButton.classList.remove('stop');
+                playButton.disabled = true;
+
+                clearInterval(this.intervalId);
+
+                const isWin = this.winningPositions.includes(this.currentPosition);
+                
+                this.highlightResult(isWin);
+
+                if (isWin) {
+                    resultElement.textContent = `🎉 ПОБЕДА! Вы выиграли 500 руб! (Позиция ${this.currentPosition + 1})`;
+                    resultElement.className = 'result win';
+                    // Добавляем 500 рублей к балансу
+                    this.gameManager.addWin(500);
+                    // Воспроизводим звук выигрыша
+                    this.audioSystem.playWinSound();
+                } else {
+                    resultElement.textContent = `😢 Попробуйте еще раз! (Позиция ${this.currentPosition + 1})`;
+                    resultElement.className = 'result lose';
+                }
+
+                setTimeout(() => {
+                    playButton.disabled = false;
+                    this.resetSlots();
+                }, 3000);
+            }
+
+            updateSlotAnimation() {
+                const previousSlot = document.querySelector(`#slots-${this.ticketId} .slot.active`);
+                if (previousSlot) {
+                    previousSlot.classList.remove('active');
+                }
+
+                this.currentPosition = (this.currentPosition + 1) % this.slotsCount;
+
+                // Воспроизводим звук щелчка при переходе
+                this.audioSystem.playClick(600 + Math.random() * 400, 0.03);
+
+                const currentSlot = document.querySelector(`#slots-${this.ticketId} .slot[data-index="${this.currentPosition}"]`);
+                currentSlot.classList.add('active');
+
+                if (this.speed < 300) {
+                    this.speed += 5;
+                    clearInterval(this.intervalId);
+                    this.intervalId = setInterval(() => {
+                        this.updateSlotAnimation();
+                    }, this.speed);
+                }
+            }
+
+            resetSlots() {
+                const slots = document.querySelectorAll(`#slots-${this.ticketId} .slot`);
+                slots.forEach(slot => {
+                    slot.classList.remove('active', 'win');
+                    slot.style.animation = '';
+                });
+                this.currentPosition = 0;
+                this.speed = 150;
+            }
+
+            highlightResult(isWin) {
+                const slots = document.querySelectorAll(`#slots-${this.ticketId} .slot`);
+                
+                this.winningPositions.forEach(position => {
+                    const winSlot = document.querySelector(`#slots-${this.ticketId} .slot[data-index="${position}"]`);
+                    if (winSlot) {
+                        winSlot.classList.add('win');
+                    }
+                });
+
+                if (isWin) {
+                    const currentSlot = document.querySelector(`#slots-${this.ticketId} .slot[data-index="${this.currentPosition}"]`);
+                    if (currentSlot) {
+                        currentSlot.style.animation = 'pulse 0.5s infinite';
+                    }
+                }
+            }
+
+            updateTicketNumber(newNumber) {
+                this.ticketId = newNumber;
+                const titleElement = this.element.querySelector('.ticket-title');
+                const idElement = this.element.querySelector('.ticket-info span');
+                
+                if (titleElement) {
+                    titleElement.textContent = `БИЛЕТ #${newNumber}`;
+                }
+                if (idElement) {
+                    idElement.textContent = newNumber;
+                }
+
+                // Обновляем ID элементов
+                const slotsContainer = this.element.querySelector('.slots-container');
+                const playButton = this.element.querySelector('.play-button');
+                const resultElement = this.element.querySelector('.result');
+
+                if (slotsContainer) slotsContainer.id = `slots-${newNumber}`;
+                if (playButton) {
+                    playButton.id = `playBtn-${newNumber}`;
+                    // Перепривязываем обработчик событий
+                    playButton.onclick = () => this.handlePlayButton();
+                }
+                if (resultElement) resultElement.id = `result-${newNumber}`;
+            }
+
+            destroy() {
+                if (this.element) {
+                    this.element.remove();
+                }
+            }
+        }
+
+        // Менеджер игры
+        class GameManager {
+            constructor() {
+                this.balance = 1000;
+                this.updateBalanceDisplay();
+            }
+
+            addWin(amount) {
+                this.balance += amount;
+                this.updateBalanceDisplay();
+            }
+
+            updateBalanceDisplay() {
+                const balanceElement = document.getElementById('balanceDisplay');
+                if (balanceElement) {
+                    balanceElement.textContent = `${this.balance} ₽`;
+                }
+            }
+        }
+
+        // Менеджер билетов
+        class TicketManager {
+            constructor(container, audioSystem, gameManager) {
+                this.container = container;
+                this.audioSystem = audioSystem;
+                this.gameManager = gameManager;
+                this.tickets = [];
+                this.nextTicketId = 1;
+                this.init();
+            }
+
+            init() {
+                // Создаем начальные 3 билета
+                for (let i = 0; i < 3; i++) {
+                    this.addTicket();
+                }
+            }
+
+            addTicket() {
+                if (this.tickets.length >= 12) {
+                    return;
+                }
+
+                const ticket = new LotteryTicket(this.container, this.nextTicketId, this.audioSystem, this.gameManager);
+                this.tickets.push(ticket);
+                this.nextTicketId++;
+            }
+
+            removeTicket() {
+                if (this.tickets.length <= 1) {
+                    return;
+                }
+
+                const ticket = this.tickets.pop();
+                ticket.destroy();
+                
+                // Обновляем нумерацию оставшихся билетов
+                this.renumberTickets();
+            }
+
+            // Перенумеровывает все билеты последовательно
+            renumberTickets() {
+                this.tickets.forEach((ticket, index) => {
+                    ticket.updateTicketNumber(index + 1);
+                });
+                // Устанавливаем следующий ID на основе количества билетов
+                this.nextTicketId = this.tickets.length + 1;
+            }
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация Three.js фона
+            initThreeJS();
+            
+            // Инициализация аудио системы
+            const audioSystem = new AudioSystem();
+            
+            // Инициализация MetaMask (без автоматического подключения)
+            const metaMask = new MetaMaskIntegration();
+            
+            // Инициализация менеджера игры
+            const gameManager = new GameManager();
+            
+            // Инициализация менеджера билетов
+            const ticketsContainer = document.getElementById('ticketsContainer');
+            const ticketManager = new TicketManager(ticketsContainer, audioSystem, gameManager);
+
+            // Управление звуком
+            const audioControl = document.getElementById('audioControl');
+            audioControl.addEventListener('click', () => {
+                const isMuted = audioSystem.toggleMute();
+                audioControl.textContent = isMuted ? '🔇' : '🔊';
+                audioControl.classList.toggle('muted', isMuted);
+            });
+
+            // Управление MetaMask
+            const metamaskControl = document.getElementById('metamaskControl');
+            metamaskControl.addEventListener('click', () => {
+                metaMask.toggleConnection();
+            });
+
+            // Управление билетами
+            const addTicketButton = document.getElementById('addTicketButton');
+            const removeTicketButton = document.getElementById('removeTicketButton');
+
+            addTicketButton.addEventListener('click', () => {
+                ticketManager.addTicket();
+            });
+
+            removeTicketButton.addEventListener('click', () => {
+                ticketManager.removeTicket();
+            });
+        });
+    </script>
+</body>
+</html>
