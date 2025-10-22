@@ -1074,7 +1074,7 @@
                 const totalBalance = walletBalanceRub + this.sessionWins + this.baseVirtualBalance;
                 
                 if (metaMask.isConnected) {
-                    modalWalletBalance.textContent = `${metaMask.balance.toFixed(4)} ETH <br> (${formatBalance(walletBalanceRub)})`;
+                    modalWalletBalance.textContent = `${metaMask.balance.toFixed(4)} ETH \n (${formatBalance(walletBalanceRub)})`;
                 } else {
                     modalWalletBalance.textContent = 'Не подключен';
                 }
