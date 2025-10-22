@@ -279,7 +279,7 @@
         .audio-control {
             position: fixed;
             top: 20px;
-            right: 20px;
+            right: 80px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -304,11 +304,54 @@
         .audio-control.muted {
             opacity: 0.5;
         }
+
+        .metamask-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .metamask-control:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .metamask-control img {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .metamask-control.connected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .metamask-control.disconnected {
+            border-color: #f44336;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
     <div id="threejs-background"></div>
     <div class="audio-control" id="audioControl">🔊</div>
+    <div class="metamask-control" id="metamaskControl">
+        <img src="https://blockchainaccreditive.github.io/MetaMask_Fox.svg.png" alt="MetaMask">
+    </div>
     
     <div class="content">
         <div class="header">
@@ -333,6 +376,7 @@
                 <li>Нажмите "СТОП" в нужный момент, чтобы остановить вращение</li>
                 <li>Если остановитесь на выигрышной комбинации - вы победили 500 рублей!</li>
                 <li>Используйте кнопки выше для добавления или удаления билетов</li>
+                <li>Нажмите на лису MetaMask в правом верхнем углу для подключения/отключения кошелька</li>
             </ol>
         </div>
     </div>
@@ -420,7 +464,7 @@
             });
         }
 
-        // Аудио система для щелчков
+        // Аудио система для щелчков и звуков выигрыша
         class AudioSystem {
             constructor() {
                 this.audioContext = null;
@@ -455,6 +499,38 @@
                 oscillator.stop(this.audioContext.currentTime + duration);
             }
 
+            playWinSound() {
+                if (this.isMuted || !this.audioContext) return;
+
+                // Создаем основной осциллятор для выигрыша
+                const oscillator1 = this.audioContext.createOscillator();
+                const oscillator2 = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                // Настраиваем частоты для приятного звука выигрыша
+                oscillator1.frequency.value = 523.25; // Нота C5
+                oscillator2.frequency.value = 659.25; // Нота E5
+                oscillator1.type = 'sine';
+                oscillator2.type = 'sine';
+
+                // Настраиваем громкость с плавным нарастанием и затуханием
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 1.5);
+
+                // Запускаем осцилляторы
+                oscillator1.start(this.audioContext.currentTime);
+                oscillator2.start(this.audioContext.currentTime);
+                
+                // Останавливаем через 1.5 секунды
+                oscillator1.stop(this.audioContext.currentTime + 1.5);
+                oscillator2.stop(this.audioContext.currentTime + 1.5);
+            }
+
             toggleMute() {
                 this.isMuted = !this.isMuted;
                 return this.isMuted;
@@ -484,25 +560,60 @@
                             this.isConnected = true;
                             await this.updateBalance();
                             console.log('MetaMask автоматически подключен:', this.account);
+                            this.updateUI();
                         }
                     } catch (error) {
                         console.log('Автоматическое подключение MetaMask не удалось:', error);
+                        this.updateUI();
                     }
 
                     // Слушаем изменения аккаунтов
                     window.ethereum.on('accountsChanged', (accounts) => {
                         if (accounts.length > 0) {
                             this.account = accounts[0];
+                            this.isConnected = true;
                             this.updateBalance();
                         } else {
                             this.isConnected = false;
                             this.account = null;
                         }
+                        this.updateUI();
                     });
 
                 } else {
                     console.log('Метамаск не обнаружен');
+                    this.updateUI();
                 }
+            }
+
+            async connect() {
+                if (typeof window.ethereum === 'undefined') {
+                    console.log('MetaMask не установлен');
+                    return false;
+                }
+
+                try {
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+                    
+                    this.account = accounts[0];
+                    this.isConnected = true;
+                    await this.updateBalance();
+                    this.updateUI();
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка подключения MetaMask:', error);
+                    return false;
+                }
+            }
+
+            disconnect() {
+                this.isConnected = false;
+                this.account = null;
+                this.balance = 0;
+                this.updateUI();
+                console.log('MetaMask отключен');
             }
 
             async updateBalance() {
@@ -517,6 +628,26 @@
                     this.balance = parseInt(balanceWei) / 1e18;
                 } catch (error) {
                     console.error('Ошибка получения баланса:', error);
+                }
+            }
+
+            updateUI() {
+                const metamaskControl = document.getElementById('metamaskControl');
+                
+                if (this.isConnected) {
+                    metamaskControl.classList.add('connected');
+                    metamaskControl.classList.remove('disconnected');
+                } else {
+                    metamaskControl.classList.add('disconnected');
+                    metamaskControl.classList.remove('connected');
+                }
+            }
+
+            toggleConnection() {
+                if (this.isConnected) {
+                    this.disconnect();
+                } else {
+                    this.connect();
                 }
             }
         }
@@ -621,6 +752,8 @@
                     resultElement.className = 'result win';
                     // Добавляем 500 рублей к балансу
                     this.gameManager.addWin(500);
+                    // Воспроизводим звук выигрыша
+                    this.audioSystem.playWinSound();
                 } else {
                     resultElement.textContent = `😢 Попробуйте еще раз! (Позиция ${this.currentPosition + 1})`;
                     resultElement.className = 'result lose';
@@ -810,6 +943,12 @@
                 const isMuted = audioSystem.toggleMute();
                 audioControl.textContent = isMuted ? '🔇' : '🔊';
                 audioControl.classList.toggle('muted', isMuted);
+            });
+
+            // Управление MetaMask
+            const metamaskControl = document.getElementById('metamaskControl');
+            metamaskControl.addEventListener('click', () => {
+                metaMask.toggleConnection();
             });
 
             // Управление билетами
