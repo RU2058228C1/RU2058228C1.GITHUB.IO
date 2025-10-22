@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВОВРЕМЯ ОСТАНОВИСЬ - Лотерея</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @font-face {font-family: Arctika;src: url('css/Arctika_Script.otf');}
+        * {margin: 0;padding: 0;box-sizing: border-box;}
+        ::-webkit-scrollbar {width:0px;}
+
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            background: #000848;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #threejs-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+         /* background: rgba(0, 0, 0, 0.7); */
+        }
+
+        .ticket-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* СТИЛИ GLASSMORPHISM ДЛЯ БИЛЕТА */
+        .ticket {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ticket::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        }
+
+        .ticket:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .ticket-title {
+            color: white;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 10px rgba(102, 126, 234, 0.8);
+            margin-bottom: 20px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            font-family: 'Arctika';
+        }
+
+        .balance-display {
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 5px;
+            font-size: 1.2em;
+            color: #4CAF50;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .balance-display:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .game-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slots-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slot.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.7), rgba(118, 75, 162, 0.7));
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.6);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .slot.win {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.7), rgba(32, 201, 151, 0.7));
+            border-color: rgba(255, 255, 255, 0.6);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
+            color: white;
+            border: none;
+            padding: 16px 50px;
+            font-size: 1.3em;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+        }
+
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .play-button:disabled {
+            background: rgba(108, 117, 125, 0.7);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .play-button.stop {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.8), rgba(232, 62, 140, 0.8));
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            min-height: 24px;
+            font-size: 1.1em;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .result.win {
+            background: rgba(40, 167, 69, 0.2);
+            color: #b5f6c7;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            text-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
+
+        .result.lose {
+            background: rgba(220, 53, 69, 0.2);
+            color: #f8b4ba;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .ticket-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 15px rgba(40, 167, 69, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(40, 167, 69, 0.7); }
+            100% { transform: scale(1); box-shadow: 0 0 15px rgba(40, 167, 69, 0.5); }
+        }
+
+        .wallet-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            color: white;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            max-width: 300px;
+        }
+
+        .wallet-control:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .wallet-control.connected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .wallet-control.disconnected {
+            border-color: #f44336;
+            opacity: 0.7;
+        }
+
+        .audio-icon {
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .audio-icon.muted {
+            opacity: 0.5;
+        }
+
+        .wallet-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .wallet-address {
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .wallet-balance {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .metamask-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        .game-counter {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1em;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .balance-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .balance-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .balance-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .balance-title {
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .balance-details {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .balance-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .balance-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .balance-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        .balance-total {
+            font-size: 1.2em;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .close-balance {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-balance:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="threejs-background"></div>
+    
+    <div class="wallet-control" id="walletControl">
+        <div class="audio-icon" id="audioControl">🔊</div>
+        <div class="wallet-info" id="walletInfo">
+            <div class="wallet-address" id="walletAddress">Не подключен</div>
+            <div class="wallet-balance" id="walletBalance">0 ₽</div>
+        </div>
+        <img class="metamask-icon" src="https://blockchainaccreditive.github.io/MetaMask_Fox.svg.png" alt="MetaMask">
+    </div>
+
+    <div class="balance-modal" id="balanceModal">
+        <div class="balance-content">
+            <div class="balance-title">Детали баланса</div>
+            <div class="balance-details">
+                <div class="balance-item">
+                    <span class="balance-label">Баланс кошелька:</span>
+                    <span class="balance-value" id="modalWalletBalance">0 ETH</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-label">Выигрыш за сессию:</span>
+                    <span class="balance-value" id="modalSessionWins">0 ₽</span>
+                </div>
+                <div class="balance-item">
+                    <span class="balance-label">Виртуальный баланс:</span>
+                    <span class="balance-value" id="modalVirtualBalance">1000 ₽</span>
+                </div>
+            </div>
+            <div class="balance-total" id="modalTotalBalance">Общий баланс: 1000 ₽</div>
+            <button class="close-balance" id="closeBalance">Закрыть</button>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="ticket-container" id="ticketContainer">
+            <!-- Единственный билет будет генерироваться JavaScript -->
+        </div>
+        
+        <div class="game-counter" id="gameCounter">
+            Игры сыграно: <span id="gamesPlayed">0</span>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Three.js сцены для красивого фона
+        function initThreeJS() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('threejs-background').appendChild(renderer.domElement);
+
+            // Создание частиц для фона
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 1500;
+            
+            const posArray = new Float32Array(particlesCount * 3);
+            const colorArray = new Float32Array(particlesCount * 3);
+            
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 50;
+                colorArray[i] = Math.random();
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            // Добавляем центральный объект
+            const geometry = new THREE.IcosahedronGeometry(2, 1);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x667eea, 
+                shininess: 100,
+                transparent: true,
+                opacity: 0.7
+            });
+            const centralObject = new THREE.Mesh(geometry, material);
+            scene.add(centralObject);
+
+            // Добавляем освещение
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            camera.position.z = 10;
+
+            // Анимация
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.x += 0.0005;
+                particlesMesh.rotation.y += 0.001;
+                
+                centralObject.rotation.x += 0.01;
+                centralObject.rotation.y += 0.005;
+                
+                // Пульсация центрального объекта
+                centralObject.scale.x = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+                centralObject.scale.y = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+                centralObject.scale.z = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+                
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Обработка изменения размера окна
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Функция для форматирования чисел с пробелами и запятыми
+        function formatBalance(value) {
+            // Округляем до 2 знаков после запятой
+            const roundedValue = Math.round(value * 100) / 100;
+            
+            // Разделяем на целую и дробную части
+            const parts = roundedValue.toString().split('.');
+            let integerPart = parts[0];
+            let decimalPart = parts[1] || '00';
+            
+            // Добавляем пробелы в целую часть
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            
+            // Убедимся, что дробная часть имеет 2 знака
+            if (decimalPart.length === 1) {
+                decimalPart += '0';
+            } else if (decimalPart.length > 2) {
+                decimalPart = decimalPart.substring(0, 2);
+            }
+            
+            return `${integerPart},${decimalPart} ₽`;
+        }
+
+        // Аудио система для щелчков и звуков выигрыша/проигрыша
+        class AudioSystem {
+            constructor() {
+                this.audioContext = null;
+                this.isMuted = false;
+                this.init();
+            }
+
+            init() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API не поддерживается');
+                }
+            }
+
+            playClick(frequency = 800, duration = 0.05) {
+                if (this.isMuted || !this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            playWinSound() {
+                if (this.isMuted || !this.audioContext) return;
+
+                // Создаем основной осциллятор для выигрыша
+                const oscillator1 = this.audioContext.createOscillator();
+                const oscillator2 = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                // Настраиваем частоты для приятного звука выигрыша
+                oscillator1.frequency.value = 523.25; // Нота C5
+                oscillator2.frequency.value = 659.25; // Нота E5
+                oscillator1.type = 'sine';
+                oscillator2.type = 'sine';
+
+                // Настраиваем громкость с плавным нарастанием и затуханием
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 1.5);
+
+                // Запускаем осцилляторы
+                oscillator1.start(this.audioContext.currentTime);
+                oscillator2.start(this.audioContext.currentTime);
+                
+                // Останавливаем через 1.5 секунды
+                oscillator1.stop(this.audioContext.currentTime + 1.5);
+                oscillator2.stop(this.audioContext.currentTime + 1.5);
+            }
+
+            playLoseSound() {
+                if (this.isMuted || !this.audioContext) return;
+
+                // Создаем звук проигрыша - более низкие и неприятные частоты
+                const oscillator1 = this.audioContext.createOscillator();
+                const oscillator2 = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator1.connect(gainNode);
+                oscillator2.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator1.frequency.value = 200; // Низкая частота
+                oscillator2.frequency.value = 300; 
+                oscillator1.type = 'sawtooth';
+                oscillator2.type = 'sawtooth';
+
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 1.0);
+
+                oscillator1.start(this.audioContext.currentTime);
+                oscillator2.start(this.audioContext.currentTime);
+                oscillator1.stop(this.audioContext.currentTime + 1.0);
+                oscillator2.stop(this.audioContext.currentTime + 1.0);
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                return this.isMuted;
+            }
+        }
+
+        // MetaMask интеграция
+        class MetaMaskIntegration {
+            constructor() {
+                this.isConnected = false;
+                this.account = null;
+                this.balance = 0;
+                this.init();
+            }
+
+            async init() {
+                // Проверяем наличие MetaMask
+                if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+                    try {
+                        // Автоматическое подключение
+                        const accounts = await window.ethereum.request({ 
+                            method: 'eth_requestAccounts' 
+                        });
+                        
+                        if (accounts.length > 0) {
+                            this.account = accounts[0];
+                            this.isConnected = true;
+                            await this.updateBalance();
+                            console.log('MetaMask автоматически подключен:', this.account);
+                            this.updateUI();
+                        }
+                    } catch (error) {
+                        console.log('Автоматическое подключение MetaMask не удалось:', error);
+                        this.updateUI();
+                    }
+
+                    // Слушаем изменения аккаунтов
+                    window.ethereum.on('accountsChanged', (accounts) => {
+                        if (accounts.length > 0) {
+                            this.account = accounts[0];
+                            this.isConnected = true;
+                            this.updateBalance();
+                        } else {
+                            this.isConnected = false;
+                            this.account = null;
+                        }
+                        this.updateUI();
+                    });
+
+                } else {
+                    console.log('Метамаск не обнаружен');
+                    this.updateUI();
+                }
+            }
+
+            async connect() {
+                if (typeof window.ethereum === 'undefined') {
+                    console.log('MetaMask не установлен');
+                    return false;
+                }
+
+                try {
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+                    
+                    this.account = accounts[0];
+                    this.isConnected = true;
+                    await this.updateBalance();
+                    this.updateUI();
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка подключения MetaMask:', error);
+                    return false;
+                }
+            }
+
+            disconnect() {
+                this.isConnected = false;
+                this.account = null;
+                this.balance = 0;
+                this.updateUI();
+                console.log('MetaMask отключен');
+            }
+
+            async updateBalance() {
+                if (!this.account) return;
+
+                try {
+                    const balanceWei = await window.ethereum.request({
+                        method: 'eth_getBalance',
+                        params: [this.account, 'latest']
+                    });
+
+                    this.balance = parseInt(balanceWei) / 1e18;
+                } catch (error) {
+                    console.error('Ошибка получения баланса:', error);
+                }
+            }
+
+            updateUI() {
+                const walletControl = document.getElementById('walletControl');
+                const walletAddress = document.getElementById('walletAddress');
+                const walletBalance = document.getElementById('walletBalance');
+                
+                if (this.isConnected) {
+                    walletControl.classList.add('connected');
+                    walletControl.classList.remove('disconnected');
+                    
+                    // Сокращенный адрес кошелька
+                    const shortAddress = `${this.account.substring(0, 6)}...${this.account.substring(this.account.length - 4)}`;
+                    walletAddress.textContent = shortAddress;
+                    
+                    // Обновляем баланс в контроле
+                    this.updateDisplayBalance();
+                } else {
+                    walletControl.classList.add('disconnected');
+                    walletControl.classList.remove('connected');
+                    walletAddress.textContent = 'Не подключен';
+                    walletBalance.textContent = '0 ₽';
+                }
+            }
+
+            // Обновление отображаемого баланса
+            updateDisplayBalance() {
+                const walletBalance = document.getElementById('walletBalance');
+                if (!this.isConnected) return;
+                
+                // Курс ETH к рублю (примерный)
+                const ethToRubRate = 200000;
+                const walletBalanceRub = this.balance * ethToRubRate + gameManager.sessionWins;
+                
+                walletBalance.textContent = formatBalance(walletBalanceRub);
+            }
+
+            toggleConnection() {
+                if (this.isConnected) {
+                    this.disconnect();
+                } else {
+                    this.connect();
+                }
+            }
+        }
+
+        // Класс для управления лотерейным билетом
+        class LotteryTicket {
+            constructor(container, audioSystem, gameManager) {
+                this.container = container;
+                this.audioSystem = audioSystem;
+                this.gameManager = gameManager;
+                this.isPlaying = false;
+                this.currentPosition = 0;
+                this.slotsCount = 8;
+                this.winningPositions = this.generateWinningPositions();
+                this.intervalId = null;
+                this.speed = 150;
+                this.element = null;
+                this.gamesPlayed = 0;
+                this.showingVirtualBalance = true;
+                this.lastResult = null;
+                this.render();
+            }
+
+            generateWinningPositions() {
+                const positions = new Set();
+                const winCount = Math.floor(Math.random() * 2) + 2;
+                
+                while (positions.size < winCount) {
+                    positions.add(Math.floor(Math.random() * this.slotsCount));
+                }
+                return Array.from(positions);
+            }
+
+            render() {
+                const ticketElement = document.createElement('div');
+                ticketElement.className = 'ticket';
+                ticketElement.innerHTML = `
+                    <div class="ticket-title">Вовремя Остановись</div>
+                    <div class="balance-display" id="balanceDisplay">${formatBalance(this.gameManager.baseVirtualBalance + this.gameManager.sessionWins)}</div>
+                    <div class="game-area">
+                        <div class="slots-container" id="slots">
+                            ${Array.from({length: this.slotsCount}, (_, i) => 
+                                `<div class="slot" data-index="${i}">${i + 1}</div>`
+                            ).join('')}
+                        </div>
+                        <button class="play-button" id="playBtn">ИГРАТЬ</button>
+                        <div class="result" id="result">${this.lastResult || ''}</div>
+                    </div>
+                    <div class="ticket-info">
+                        Выигрышных позиций: ${this.winningPositions.length} | 
+                        Приз: 500 ₽
+                    </div>
+                `;
+
+                this.container.appendChild(ticketElement);
+                this.element = ticketElement;
+
+                document.getElementById('playBtn').addEventListener('click', () => {
+                    this.handlePlayButton();
+                });
+
+                // Добавляем обработчик клика на баланс
+                document.getElementById('balanceDisplay').addEventListener('click', () => {
+                    this.toggleBalanceDisplay();
+                });
+
+                // Восстанавливаем класс результата, если он был
+                if (this.lastResult) {
+                    const resultElement = document.getElementById('result');
+                    if (this.lastResult.includes('ПОБЕДА')) {
+                        resultElement.className = 'result win';
+                    } else {
+                        resultElement.className = 'result lose';
+                    }
+                }
+            }
+
+            toggleBalanceDisplay() {
+                const balanceDisplay = document.getElementById('balanceDisplay');
+                
+                // Плавное исчезновение
+                balanceDisplay.style.opacity = '0';
+                
+                setTimeout(() => {
+                    this.showingVirtualBalance = !this.showingVirtualBalance;
+                    
+                    if (this.showingVirtualBalance) {
+                        // Показываем виртуальный баланс
+                        balanceDisplay.textContent = formatBalance(this.gameManager.baseVirtualBalance + this.gameManager.sessionWins);
+                    } else {
+                        // Показываем баланс кошелька
+                        if (metaMask.isConnected) {
+                            const ethToRubRate = 200000;
+                            const walletBalanceRub = metaMask.balance * ethToRubRate + this.gameManager.sessionWins;
+                            balanceDisplay.textContent = formatBalance(walletBalanceRub);
+                        } else {
+                            balanceDisplay.textContent = "Кошелёк не подключен";
+                        }
+                    }
+                    
+                    // Плавное появление
+                    balanceDisplay.style.opacity = '1';
+                }, 300);
+            }
+
+            handlePlayButton() {
+                if (!this.isPlaying) {
+                    this.startGame();
+                } else {
+                    this.stopGame();
+                }
+            }
+
+            startGame() {
+                this.isPlaying = true;
+                const playButton = document.getElementById('playBtn');
+                const resultElement = document.getElementById('result');
+                
+                playButton.textContent = 'СТОП';
+                playButton.classList.add('stop');
+                // Не очищаем результат - он остается до получения нового
+                resultElement.className = 'result';
+
+                this.resetSlots();
+
+                this.intervalId = setInterval(() => {
+                    this.updateSlotAnimation();
+                }, this.speed);
+            }
+
+            stopGame() {
+                this.isPlaying = false;
+                const playButton = document.getElementById('playBtn');
+                const resultElement = document.getElementById('result');
+                
+                playButton.textContent = 'ИГРАТЬ';
+                playButton.classList.remove('stop');
+                playButton.disabled = true;
+
+                clearInterval(this.intervalId);
+
+                const isWin = this.winningPositions.includes(this.currentPosition);
+                
+                this.highlightResult(isWin);
+
+                if (isWin) {
+                    resultElement.textContent = `🎉 ПОБЕДА! Вы выиграли 500 руб! (Позиция ${this.currentPosition + 1})`;
+                    resultElement.className = 'result win';
+                    this.lastResult = resultElement.textContent;
+                    // Добавляем 500 рублей к балансу
+                    this.gameManager.addWin(500);
+                    // Воспроизводим звук выигрыша
+                    this.audioSystem.playWinSound();
+                } else {
+                    resultElement.textContent = `😢 Попробуйте еще раз! (Позиция ${this.currentPosition + 1})`;
+                    resultElement.className = 'result lose';
+                    this.lastResult = resultElement.textContent;
+                    // Воспроизводим звук проигрыша
+                    this.audioSystem.playLoseSound();
+                }
+
+                // Увеличиваем счетчик игр
+                this.gamesPlayed++;
+                document.getElementById('gamesPlayed').textContent = this.gamesPlayed;
+
+                // После завершения игры пересоздаем билет (но сохраняем результат)
+                setTimeout(() => {
+                    this.regenerateTicket();
+                }, 3000);
+            }
+
+            updateSlotAnimation() {
+                const previousSlot = document.querySelector('#slots .slot.active');
+                if (previousSlot) {
+                    previousSlot.classList.remove('active');
+                }
+
+                this.currentPosition = (this.currentPosition + 1) % this.slotsCount;
+
+                // Воспроизводим звук щелчка при переходе
+                this.audioSystem.playClick(600 + Math.random() * 400, 0.03);
+
+                const currentSlot = document.querySelector(`#slots .slot[data-index="${this.currentPosition}"]`);
+                currentSlot.classList.add('active');
+
+                if (this.speed < 300) {
+                    this.speed += 5;
+                    clearInterval(this.intervalId);
+                    this.intervalId = setInterval(() => {
+                        this.updateSlotAnimation();
+                    }, this.speed);
+                }
+            }
+
+            resetSlots() {
+                const slots = document.querySelectorAll('#slots .slot');
+                slots.forEach(slot => {
+                    slot.classList.remove('active', 'win');
+                    slot.style.animation = '';
+                });
+                this.currentPosition = 0;
+                this.speed = 150;
+            }
+
+            highlightResult(isWin) {
+                const slots = document.querySelectorAll('#slots .slot');
+                
+                this.winningPositions.forEach(position => {
+                    const winSlot = document.querySelector(`#slots .slot[data-index="${position}"]`);
+                    if (winSlot) {
+                        winSlot.classList.add('win');
+                    }
+                });
+
+                if (isWin) {
+                    const currentSlot = document.querySelector(`#slots .slot[data-index="${this.currentPosition}"]`);
+                    if (currentSlot) {
+                        currentSlot.style.animation = 'pulse 0.5s infinite';
+                    }
+                }
+            }
+
+            // Метод для регенерации билета
+            regenerateTicket() {
+                // Удаляем текущий элемент
+                if (this.element) {
+                    this.element.remove();
+                }
+                
+                // Генерируем новые выигрышные позиции
+                this.winningPositions = this.generateWinningPositions();
+                
+                // Сбрасываем состояние
+                this.isPlaying = false;
+                this.currentPosition = 0;
+                this.speed = 150;
+                
+                // Создаем новый элемент (сохраняем результат)
+                this.render();
+                
+                // Включаем кнопку
+                setTimeout(() => {
+                    const playButton = document.getElementById('playBtn');
+                    if (playButton) {
+                        playButton.disabled = false;
+                    }
+                }, 100);
+            }
+
+            destroy() {
+                if (this.element) {
+                    this.element.remove();
+                }
+            }
+        }
+
+        // Менеджер игры
+        class GameManager {
+            constructor() {
+                this.baseVirtualBalance = 1000; // Виртуальный баланс
+                this.sessionWins = 0; // Выигрыш за сессию
+            }
+
+            addWin(amount) {
+                this.sessionWins += amount;
+                
+                // Обновляем отображение в билете
+                const balanceDisplay = document.getElementById('balanceDisplay');
+                if (balanceDisplay) {
+                    if (lotteryTicket.showingVirtualBalance) {
+                        balanceDisplay.textContent = formatBalance(this.baseVirtualBalance + this.sessionWins);
+                    } else {
+                        if (metaMask.isConnected) {
+                            const ethToRubRate = 200000;
+                            const walletBalanceRub = metaMask.balance * ethToRubRate + this.sessionWins;
+                            balanceDisplay.textContent = formatBalance(walletBalanceRub);
+                        }
+                    }
+                }
+                
+                // Обновляем отображение в контроле MetaMask
+                if (metaMask) {
+                    metaMask.updateDisplayBalance();
+                }
+                
+                // Обновляем модальное окно баланса
+                this.updateBalanceModal();
+            }
+
+            updateBalanceModal() {
+                const modalWalletBalance = document.getElementById('modalWalletBalance');
+                const modalSessionWins = document.getElementById('modalSessionWins');
+                const modalVirtualBalance = document.getElementById('modalVirtualBalance');
+                const modalTotalBalance = document.getElementById('modalTotalBalance');
+                
+                // Курс ETH к рублю (примерный)
+                const ethToRubRate = 200000;
+                const walletBalanceRub = metaMask.balance * ethToRubRate;
+                const totalBalance = walletBalanceRub + this.sessionWins + this.baseVirtualBalance;
+                
+                if (metaMask.isConnected) {
+                    modalWalletBalance.textContent = `${metaMask.balance.toFixed(4)} ETH (${formatBalance(walletBalanceRub)})`;
+                } else {
+                    modalWalletBalance.textContent = 'Не подключен';
+                }
+                
+                modalSessionWins.textContent = formatBalance(this.sessionWins);
+                modalVirtualBalance.textContent = formatBalance(this.baseVirtualBalance);
+                modalTotalBalance.textContent = `Общий баланс: ${formatBalance(totalBalance)}`;
+            }
+
+            showBalanceModal() {
+                this.updateBalanceModal();
+                document.getElementById('balanceModal').classList.add('active');
+            }
+
+            hideBalanceModal() {
+                document.getElementById('balanceModal').classList.remove('active');
+            }
+        }
+
+        // Инициализация при загрузке страницы
+        let metaMask;
+        let gameManager;
+        let lotteryTicket;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация Three.js фона
+            initThreeJS();
+            
+            // Инициализация аудио системы
+            const audioSystem = new AudioSystem();
+            
+            // Инициализация MetaMask (автоматически)
+            metaMask = new MetaMaskIntegration();
+            
+            // Инициализация менеджера игры
+            gameManager = new GameManager();
+            
+            // Инициализация единственного билета
+            const ticketContainer = document.getElementById('ticketContainer');
+            lotteryTicket = new LotteryTicket(ticketContainer, audioSystem, gameManager);
+
+            // Управление звуком
+            const audioControl = document.getElementById('audioControl');
+            audioControl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isMuted = audioSystem.toggleMute();
+                audioControl.textContent = isMuted ? '🔇' : '🔊';
+                audioControl.classList.toggle('muted', isMuted);
+            });
+
+            // Управление MetaMask
+            const walletControl = document.getElementById('walletControl');
+            walletControl.addEventListener('click', (e) => {
+                // Если клик не на иконке аудио
+                if (!e.target.classList.contains('audio-icon') && e.target.id !== 'audioControl') {
+                    metaMask.toggleConnection();
+                }
+            });
+
+            // Показ баланса при клике на информацию о кошельке
+            const walletInfo = document.getElementById('walletInfo');
+            walletInfo.addEventListener('click', (e) => {
+                e.stopPropagation();
+                gameManager.showBalanceModal();
+            });
+
+            // Закрытие модального окна баланса
+            const closeBalance = document.getElementById('closeBalance');
+            closeBalance.addEventListener('click', () => {
+                gameManager.hideBalanceModal();
+            });
+
+            // Закрытие модального окна при клике вне его
+            const balanceModal = document.getElementById('balanceModal');
+            balanceModal.addEventListener('click', (e) => {
+                if (e.target === balanceModal) {
+                    gameManager.hideBalanceModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
