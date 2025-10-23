@@ -793,9 +793,7 @@
     <div class="content">
         <div class="ticket-container" id="ticketContainer">
             <!-- Единственный билет будет генерироваться JavaScript -->
-        <div class="game-counter" id="gameCounter">
-            сыграно: <span id="gamesPlayed">0</span>
-        </div>
+
     
         
         
@@ -1203,6 +1201,9 @@
                               <button class="play-button" id="playBtn">
                                 <i class="fa-solid fa-play"></i>
                               </button>
+                                <div class="game-counter" id="gameCounter">
+                                   сыграно: <span id="gamesPlayed">0</span>
+                                </div>
                             ${this.hasPlayedFirstGame ? `<div class="result" id="result">${this.lastResult || ''}</div>` : ''}
                         </div>
                         <div class="ticket-info">
