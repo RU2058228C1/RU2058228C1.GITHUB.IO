@@ -45,9 +45,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 10px;font-weight:bolder;
-         /* background: rgba(0, 8, 72, 0.7); */
-            width: 100%;color:white;
+            padding: 10px;
+            background: rgba(0, 8, 72, 0.7);
+            width: 100%;
         }
 
         .ticket-container {
@@ -55,6 +55,36 @@
             max-width: 600px;
             margin: 0 auto;
             position: relative;
+        }
+
+        /* Центрирование для десктопов */
+        @media (min-width: 768px) {
+            .content {
+                justify-content: center;
+            }
+            
+            .ticket-container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+        }
+
+        /* Полноэкранный режим для мобильных */
+        @media (max-width: 767px) {
+            .content {
+                padding: 5px;
+                justify-content: flex-start;
+                padding-top: 10px;
+            }
+            
+            .ticket-container {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .ticket {
+                border-radius: 12px;
+            }
         }
 
         /* СТИЛИ GLASSMORPHISM ДЛЯ БИЛЕТА */
@@ -104,6 +134,7 @@
             transition: all 0.3s ease;
             width: 100%;
             border-radius: 16px 16px 0 0;
+            text-align: center;
         }
 
         .wallet-control:hover {
@@ -300,9 +331,32 @@
         .audio-icon {
             font-size: 1.1em;
             transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .audio-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .audio-icon.muted {
+            opacity: 0.5;
+        }
+
+        .music-icon {
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .music-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .music-icon.muted {
             opacity: 0.5;
         }
 
@@ -311,31 +365,36 @@
             font-weight: 600;
         }
 
-        .wallet-control {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            color: white;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            width: 100%;
-            border-radius: 16px 16px 0 0;
-            /* Центрирование текста */
-            text-align: center;
-        }
-
         .wallet-info {
             display: flex;
             flex-direction: column;
-            align-items: center; /* Центрируем по горизонтали */
-            justify-content: center; /* Центрируем по вертикали */
+            align-items: center;
+            justify-content: center;
             gap: 2px;
-            flex: 1; /* Занимает все доступное пространство */
+            flex: 1;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .wallet-info:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .metamask-icon {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            padding: 3px;
+        }
+
+        .metamask-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
         }
 
         .balance-modal {
@@ -344,7 +403,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-         /* background: rgba(0, 0, 0, 0.8); */
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -353,7 +412,6 @@
             visibility: hidden;
             transition: all 0.3s ease;
             padding: 15px;
-            /* Плавное появление */
             transform: scale(0.9);
         }
 
@@ -429,6 +487,48 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
+        /* Стили для ползунка громкости */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .volume-control:hover .volume-slider {
+            opacity: 1;
+        }
+
         /* Медиа-запросы для мобильных устройств */
         @media (min-width: 768px) {
             .content {
@@ -493,7 +593,7 @@
                 font-size: 0.9em;
             }
             
-            .audio-icon {
+            .audio-icon, .music-icon {
                 font-size: 1.2em;
             }
             
@@ -573,7 +673,7 @@
                 height: 18px;
             }
             
-            .audio-icon {
+            .audio-icon, .music-icon {
                 font-size: 1em;
             }
             
@@ -594,6 +694,10 @@
             
             .ticket-info {
                 font-size: 0.8em;
+            }
+            
+            .volume-slider {
+                width: 60px;
             }
         }
 
@@ -617,6 +721,10 @@
             .wallet-left, .wallet-right {
                 gap: 8px;
             }
+            
+            .volume-slider {
+                width: 50px;
+            }
         }
 
         /* Для очень высоких экранов */
@@ -633,64 +741,15 @@
                 min-height: -webkit-fill-available;
             }
         }
-        /* ... (предыдущие стили остаются без изменений) ... */
-
-        .wallet-control {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            color: white;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            width: 100%;
-            border-radius: 16px 16px 0 0;
-            /* Центрирование текста */
-            text-align: center;
-        }
-
-        .wallet-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* Центрируем по горизонтали */
-            justify-content: center; /* Центрируем по вертикали */
-            gap: 2px;
-            flex: 1; /* Занимает все доступное пространство */
-        }
-
-        .balance-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-         /* background: rgba(0, 0, 0, 0.8); */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            padding: 15px;
-            /* Плавное появление */
-            transform: scale(0.9);
-        }
-
-        .balance-modal.active {
-            opacity: 1;
-            visibility: visible;
-            transform: scale(1);
-        }
-
-        /* ... (остальные стили без изменений) ... */
     </style>
 </head>
 <body>
+    <!-- Аудио элемент для фоновой музыки -->
+    <audio id="backgroundMusic" loop>
+        <source src="https://ru2058228c1.github.io/media/screen.mp3" type="audio/mpeg">
+        Ваш браузер не поддерживает аудио элемент.
+    </audio>
+
     <div id="threejs-background"></div>
 
     <div class="balance-modal" id="balanceModal">
@@ -829,6 +888,39 @@
             }
             
             return `${integerPart},${decimalPart} ₽`;
+        }
+
+        // Система управления музыкой
+        class MusicSystem {
+            constructor() {
+                this.audio = document.getElementById('backgroundMusic');
+                this.isMuted = false;
+                this.volume = 0.5; // Начальная громкость 50%
+                this.audio.volume = this.volume;
+                this.init();
+            }
+
+            init() {
+                // Попытка автоматического воспроизведения
+                this.audio.play().catch(error => {
+                    console.log('Автовоспроизведение музыки заблокировано. Музыка начнется после первого взаимодействия.');
+                });
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                this.audio.muted = this.isMuted;
+                return this.isMuted;
+            }
+
+            setVolume(volume) {
+                this.volume = volume;
+                this.audio.volume = volume;
+            }
+
+            getVolume() {
+                return this.volume;
+            }
         }
 
         // Аудио система для щелчков и звуков выигрыша/проигрыша
@@ -1071,10 +1163,11 @@
 
         // Класс для управления лотерейным билетом
         class LotteryTicket {
-            constructor(container, audioSystem, gameManager) {
+            constructor(container, audioSystem, gameManager, musicSystem) {
                 this.container = container;
                 this.audioSystem = audioSystem;
                 this.gameManager = gameManager;
+                this.musicSystem = musicSystem;
                 this.isPlaying = false;
                 this.currentPosition = 0;
                 this.slotsCount = 8;
@@ -1106,6 +1199,10 @@
                     <div class="wallet-control" id="walletControl">
                         <div class="wallet-left">
                             <div class="audio-icon" id="audioControl">🔊</div>
+                            <div class="music-icon" id="musicControl">🎵</div>
+                            <div class="volume-control">
+                                <input type="range" min="0" max="1" step="0.1" value="${this.musicSystem.getVolume()}" class="volume-slider" id="volumeSlider">
+                            </div>
                         </div>
                         <div class="wallet-info" id="walletInfo">
                             <div class="wallet-address" id="walletAddress">Не подключен</div>
@@ -1161,13 +1258,28 @@
             }
 
             initWalletControls() {
-                // Управление звуком
+                // Управление звуком игры
                 const audioControl = document.getElementById('audioControl');
                 audioControl.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const isMuted = this.audioSystem.toggleMute();
                     audioControl.textContent = isMuted ? '🔇' : '🔊';
                     audioControl.classList.toggle('muted', isMuted);
+                });
+
+                // Управление фоновой музыкой
+                const musicControl = document.getElementById('musicControl');
+                musicControl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isMuted = this.musicSystem.toggleMute();
+                    musicControl.textContent = isMuted ? '🔇' : '🎵';
+                    musicControl.classList.toggle('muted', isMuted);
+                });
+
+                // Управление громкостью музыки
+                const volumeSlider = document.getElementById('volumeSlider');
+                volumeSlider.addEventListener('input', (e) => {
+                    this.musicSystem.setVolume(parseFloat(e.target.value));
                 });
 
                 // Открытие модального окна при клике на информацию о кошельке
@@ -1422,7 +1534,7 @@
                 const totalBalance = walletBalanceRub + this.sessionWins + this.baseVirtualBalance;
                 
                 if (metaMask.isConnected) {
-                    modalWalletBalance.innerHTML = `${metaMask.balance.toFixed(4)} ETH <br> (${formatBalance(walletBalanceRub)})`;
+                    modalWalletBalance.textContent = `${metaMask.balance.toFixed(4)} ETH (${formatBalance(walletBalanceRub)})`;
                 } else {
                     modalWalletBalance.textContent = 'Не подключен';
                 }
@@ -1446,10 +1558,14 @@
         let metaMask;
         let gameManager;
         let lotteryTicket;
+        let musicSystem;
 
         document.addEventListener('DOMContentLoaded', () => {
             // Инициализация Three.js фона
             initThreeJS();
+            
+            // Инициализация системы музыки
+            musicSystem = new MusicSystem();
             
             // Инициализация аудио системы
             const audioSystem = new AudioSystem();
@@ -1462,7 +1578,7 @@
             
             // Инициализация единственного билета
             const ticketContainer = document.getElementById('ticketContainer');
-            lotteryTicket = new LotteryTicket(ticketContainer, audioSystem, gameManager);
+            lotteryTicket = new LotteryTicket(ticketContainer, audioSystem, gameManager, musicSystem);
 
             // Закрытие модального окна баланса
             const closeBalance = document.getElementById('closeBalance');
