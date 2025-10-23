@@ -6,6 +6,76 @@
     <title>ВОВРЕМЯ ОСТАНОВИСЬ - Лотерея</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Обновленные стили для кнопки -->
+<style>
+.play-button {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
+    color: white;
+    border: none;
+    padding: 0;
+    font-size: 1.5em;
+    font-weight: 600;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.play-button:disabled {
+    background: rgba(108, 117, 125, 0.7);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.play-button.stop {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.8), rgba(232, 62, 140, 0.8));
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+/* Медиа-запросы для адаптивности */
+@media (min-width: 768px) {
+    .play-button {
+        width: 70px;
+        height: 70px;
+        font-size: 1.6em;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .play-button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3em;
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 360px) {
+    .play-button {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1em;
+    }
+}
+</style>
+
+
     <link rel="stylesheet" href="css/style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -1124,8 +1194,10 @@
                                 ${Array.from({length: this.slotsCount}, (_, i) => 
                                     `<div class="slot" data-index="${i}">${i + 1}</div>`
                                 ).join('')}
-                            </div>
-                            <button class="play-button" id="playBtn">ИГРАТЬ</button>
+                            </div>  
+                              <button class="play-button" id="playBtn">
+                                <i class="fa-solid fa-play"></i>
+                              </button>
                             ${this.hasPlayedFirstGame ? `<div class="result" id="result">${this.lastResult || ''}</div>` : ''}
                         </div>
                         <div class="ticket-info">
